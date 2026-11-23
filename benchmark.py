@@ -5838,7 +5838,6 @@ def write_kvtest_basic_csv(local_log_dir, cfg, ts, cfg_path, cluster=None,
         def aggregate(op_name):
             total = ok = fail = bytes_ = 0
             wall = 0.0
-            busy_ms = 0.0
             weighted = {k: 0.0 for k in lat_keys}
             mins = []
             maxs = []
@@ -5848,7 +5847,6 @@ def write_kvtest_basic_csv(local_log_dir, cfg, ts, cfg_path, cluster=None,
                 ok += int(st.get("success", 0) or 0)
                 fail += int(st.get("failure", 0) or 0)
                 bytes_ += int(st.get("bytes", 0) or 0)
-                busy_ms += float(st.get("busy_ms", 0) or 0)
                 wall = max(wall, float(summary.get("elapsed_seconds", 0) or 0))
                 weight = int(st.get("success", 0) or 0)
                 for key in lat_keys:
@@ -5857,11 +5855,11 @@ def write_kvtest_basic_csv(local_log_dir, cfg, ts, cfg_path, cluster=None,
                     mins.append(float(st.get("min_ms", 0) or 0))
                 if st.get("max_ms") is not None:
                     maxs.append(float(st.get("max_ms", 0) or 0))
-            busy_s = busy_ms / 1000.0
-            throughput_mb = (bytes_ / busy_s / 1024.0 ** 2
-                             if busy_s > 0
-                             else (bytes_ / wall / 1024.0 ** 2
-                                   if wall > 0 else 0.0))
+            # Aggregate throughput uses wall time. Summing per-thread latency
+            # (busy_ms) would make multi-thread throughput look like a single
+            # thread's bandwidth.
+            throughput_mb = (bytes_ / wall / 1024.0 ** 2
+                             if wall > 0 else 0.0)
             row = {
                 "scenario": cfg.get("scenario", "kvtest_basic"),
                 "work_mode": cfg.get("work_mode", "basic"),

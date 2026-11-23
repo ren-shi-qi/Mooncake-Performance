@@ -829,7 +829,7 @@ def test_kvtest_csv_prefers_summary_busy_throughput(tmp_path):
     assert reader[0]["throughput_mb_s"] == round(600.25, 2)
 
 
-def test_write_kvtest_basic_csv_prefers_busy_throughput(tmp_path):
+def test_write_kvtest_basic_csv_uses_wall_throughput(tmp_path):
     cfg = {
         "scenario": "kvtest_basic", "work_mode": "basic",
         "operation": "get_buffer", "protocol": "ub", "key_count": 1000,
@@ -842,9 +842,11 @@ def test_write_kvtest_basic_csv_prefers_busy_throughput(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
     base = bm.kvtest_basic_base("get_buffer", "node1", 1, 9401, "8MB")
+    bytes_total = 2 * 8 * 1024 * 1024
     summary = {
         "operations": {"get_buffer": {
-            "total": 2, "success": 2, "failure": 0, "bytes": 2000,
+            "total": 2, "success": 2, "failure": 0,
+            "bytes": bytes_total,
             "busy_ms": 50.0, "avg_ms": 25.0, "min_ms": 20.0,
             "max_ms": 30.0, "p99_ms": 30.0, "p999_ms": 30.0,
             "p9999_ms": 30.0}},
@@ -856,5 +858,6 @@ def test_write_kvtest_basic_csv_prefers_busy_throughput(tmp_path):
         str(logs), cfg, "ts", os.path.join(str(tmp_path), "get_buffer.json"),
         cluster=None, result_dir=str(tmp_path))
     assert len(rows) == 1
-    expected = 2000 / 0.05 / 1024.0 ** 2
+    # 16 MiB over 2 s = 8 MiB/s, independent of busy_ms.
+    expected = bytes_total / 2.0 / 1024.0 ** 2
     assert rows[0]["throughput_mb_s"] == round(expected, 2)
