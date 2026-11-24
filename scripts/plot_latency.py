@@ -317,7 +317,7 @@ def process_file(path, args):
           + ("" if times else "  [no timestamps -> request#i axis]"))
     if not lats:
         print("  skip (no OK samples)")
-        return
+        return []
     if not args.outlier:
         # auto = p99 x 10：p99 位次在尾部之外，不会被离群值自身抬高
         # （p999 在小样本时会落在离群点上导致阈值自污染）
@@ -326,17 +326,21 @@ def process_file(path, args):
         threshold = args.outlier
     print(f"  outlier threshold: {threshold}ms "
           f"({'auto = p99 x 10' if not args.outlier else 'explicit'})")
+    outputs = []
     if args.type in ("both", "latency"):
-        _emit_plots(stem, file_stem, "latency", lats, times, out_dir, threshold,
-                    f"{len(lats)} OK samples")
+        outputs.extend(_emit_plots(
+            stem, file_stem, "latency", lats, times, out_dir, threshold,
+            f"{len(lats)} OK samples"))
     if qws and args.type in ("both", "queue-wait"):
         # queue_wait 阈值独立按自身分布计算，避免被时延离群值牵连；
         # 时间轴用 qw 自己的 reader 行时间（dual 混合日志下与全量
         # times 长度不同）
         qw_threshold = threshold if args.outlier else \
             max(round(percentile(sorted(qws), 0.99) * 10), 1)
-        _emit_plots(stem, file_stem, "queue-wait", qws, qw_times, out_dir, qw_threshold,
-                    f"{len(qws)} samples")
+        outputs.extend(_emit_plots(
+            stem, file_stem, "queue-wait", qws, qw_times, out_dir, qw_threshold,
+            f"{len(qws)} samples"))
+    return outputs
 
 
 def parse_kvtest_samples(path):
@@ -446,13 +450,17 @@ def main(argv=None):
     inputs = collect_inputs(args.log)
     if not inputs:
         sys.exit(f"[ERROR] no *.log or *.samples.csv under {args.log}")
+    produced = 0
     for path in inputs:
         if path.endswith(KVTEST_SAMPLES_SUFFIX):
-            process_kvtest_samples(path, args)
+            produced += len(process_kvtest_samples(path, args))
         else:
-            process_file(path, args)
-    print("done")
+            produced += len(process_file(path, args) or [])
+    if produced == 0:
+        sys.exit("[ERROR] no figures produced (no OK RESULT/latency samples)")
+    print("done ({} figures)".format(produced))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -129,6 +129,19 @@ def test_kvtest_samples_generate_one_request_per_point_png(tmp_path):
     assert str(window) not in inputs
 
 
+def test_plot_main_fails_when_no_ok_samples(tmp_path):
+    """No OK samples must fail, so auto-plot keeps the raw samples."""
+    pl = _load_plot_module()
+    path = tmp_path / "kvtest_empty.i0_p9101.kvtest_8MB.samples.csv"
+    path.write_text(
+        "elapsed_us,instance_id,operation,request_index,latency_ms,status,bytes\n"
+        "1000,0,get_buffer,0,0.360000,MISS,0\n",
+        encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        pl.main(["--log", str(path)])
+    assert exc.value.code != 0
+
+
 def test_plot_series_exposes_percentiles_in_legend(tmp_path, monkeypatch):
     pl = _load_plot_module()
     original_close = pl.plt.close
