@@ -241,10 +241,12 @@ def test_kvtest_key_pool_zero_and_auto_have_distinct_semantics():
 
 def test_kvtest_operation_maps_cover_documented_native_names():
     assert bm.KVTEST_WRITER_OPS["upsert"] == "upsert"
+    assert bm.KVTEST_WRITER_OPS["batch_upsert"] == "batch_upsert"
     assert bm.KVTEST_WRITER_OPS["batch_upsert_from"] == \
         "batch_upsert_from"
     assert bm.KVTEST_WRITER_OPS["remove"] == "remove"
-    assert bm.KVTEST_READER_OPS["batch_get_buffer"] == "get_batch"
+    assert bm.KVTEST_READER_OPS["batch_get_buffer"] == "batch_get_buffer"
+    assert bm.KVTEST_READER_OPS["batch_get_into"] == "batch_get_into"
     assert bm.KVTEST_READER_OPS["get_batch"] == "get_batch"
     assert bm.KVTEST_READER_OPS["exist"] == "exist"
 
@@ -790,8 +792,9 @@ def test_kvtest_basic_config_router_accepts_new_scenario():
 def test_kvtest_op_maps_only_emit_native_cpp_operations():
     native = {
         "put", "put_batch", "put_from", "batch_put_from", "upsert",
-        "upsert_from", "batch_upsert_from", "get", "get_batch", "get_into",
-        "get_buffer", "exist", "batch_exist", "remove", "batch_remove",
+        "upsert_from", "batch_upsert", "batch_upsert_from", "get", "get_batch",
+        "batch_get_buffer", "get_into", "batch_get_into", "get_buffer",
+        "exist", "batch_exist", "remove", "batch_remove",
     }
     for mapping in (bm.KVTEST_WRITER_OPS, bm.KVTEST_READER_OPS):
         for alias, op in mapping.items():
@@ -799,8 +802,10 @@ def test_kvtest_op_maps_only_emit_native_cpp_operations():
                 alias, op)
     # legacy mSet/mGet configs must land on the batch interfaces
     assert bm.KVTEST_WRITER_OPS["mSet"] == "batch_upsert_from"
-    assert bm.KVTEST_READER_OPS["mGet"] == "get_batch"
-    assert bm.KVTEST_READER_OPS["batch_get_buffer"] == "get_batch"
+    assert bm.KVTEST_WRITER_OPS["upsert_batch"] == "batch_upsert"
+    assert bm.KVTEST_READER_OPS["mGet"] == "batch_get_buffer"
+    assert bm.KVTEST_READER_OPS["batch_get_buffer"] == "batch_get_buffer"
+    assert bm.KVTEST_READER_OPS["batch_get_into"] == "batch_get_into"
 
 
 def test_kvtest_csv_prefers_summary_busy_throughput(tmp_path):

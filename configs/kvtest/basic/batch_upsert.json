@@ -1,0 +1,5 @@
+{
+  "operation": "batch_upsert",
+  "batch_size": 16,
+  "work_mode": "batch_upsert"
+}

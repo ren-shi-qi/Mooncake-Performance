@@ -844,6 +844,8 @@ KVTEST_WRITER_OPS = {
     "batch_put_from": "batch_put_from",
     "upsert_from": "upsert_from",
     "upsertFrom": "upsert_from",
+    "batch_upsert": "batch_upsert",
+    "upsert_batch": "batch_upsert",
     "batch_upsert_from": "batch_upsert_from",
     "batchUpsertFrom": "batch_upsert_from",
     "mSet": "batch_upsert_from",
@@ -854,11 +856,12 @@ KVTEST_READER_OPS = {
     "get": "get",
     "get_batch": "get_batch",
     "get_into": "get_into",
+    "batch_get_into": "batch_get_into",
     "get_buffer": "get_buffer",
     "getBuffer": "get_buffer",
-    "batch_get_buffer": "get_batch",
-    "batchGetBuffer": "get_batch",
-    "mGet": "get_batch",
+    "batch_get_buffer": "batch_get_buffer",
+    "batchGetBuffer": "batch_get_buffer",
+    "mGet": "batch_get_buffer",
     "exist": "exist",
     "isExist": "exist",
     "batch_exist": "batch_exist",
@@ -5351,9 +5354,11 @@ def run_kvtest_scenario(cluster, globals_cfg, cfg, ts, args):
 # kvtest_basic scenario: the C++ single-interface runner behind the harness
 # --------------------------------------------------------------------------
 
-KVTEST_BASIC_PUT_IFACES = ("put", "put_batch", "put_from", "upsert",
-                           "upsert_from", "batch_upsert_from")
-KVTEST_BASIC_GET_IFACES = ("get", "get_batch", "get_into", "get_buffer",
+KVTEST_BASIC_PUT_IFACES = ("put", "put_batch", "put_from", "batch_put_from",
+                           "upsert", "upsert_from", "batch_upsert",
+                           "batch_upsert_from")
+KVTEST_BASIC_GET_IFACES = ("get", "get_batch", "batch_get_buffer",
+                           "get_into", "batch_get_into", "get_buffer",
                            "exist", "batch_exist")
 
 
